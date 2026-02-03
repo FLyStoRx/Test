@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Streaming Player TV</title>
+    <title>Test Séries TV - Épisodes 2 & 3</title>
     <style>
         body, html { 
             margin: 0; 
@@ -12,7 +12,7 @@
             height: 100%; 
             background-color: #000; 
             overflow: hidden; 
-            font-family: sans-serif;
+            font-family: Arial, sans-serif;
         }
 
         .wrapper {
@@ -21,6 +21,9 @@
             height: 100vh;
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         iframe {
@@ -31,33 +34,63 @@
             height: 100%;
             border: none;
             display: block;
+            background-color: #000;
         }
 
-        /* Bouton discret pour relancer si ça freeze */
-        .reload-btn {
+        /* Conteneur des contrôles en bas */
+        .controls {
             position: fixed;
             bottom: 20px;
+            left: 20px;
             right: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
             z-index: 9999;
-            font-size: 12px;
-            opacity: 0.5;
+            pointer-events: none; /* Permet de cliquer à travers si besoin */
         }
-        
-        .reload-btn:hover { opacity: 1; background: rgba(255, 255, 255, 0.4); }
+
+        .btn {
+            background: rgba(40, 40, 40, 0.9);
+            color: #fff;
+            border: 2px solid #666;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: auto; /* Réactive le clic pour les boutons */
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .btn:focus {
+            background: #2ecc71; /* Vert pour le bouton suivant */
+            border-color: #fff;
+            transform: scale(1.1);
+        }
+
+        .btn-reload:focus {
+            background: #e74c3c; /* Rouge pour le bouton reload */
+        }
+
+        #ep-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            z-index: 9999;
+        }
     </style>
 </head>
 <body>
 
+    <div id="ep-indicator">Épisode actuel : <span id="ep-number">2</span></div>
+
     <div class="wrapper">
         <iframe 
             id="videoPlayer"
-            src="https://vidmoly.net/embed-g7d07h39u6xr.html" 
+            src="URL_DE_TON_EPISODE_2" 
             allow="autoplay; fullscreen" 
             allowfullscreen
             loading="lazy"
@@ -66,19 +99,56 @@
         </iframe>
     </div>
 
-    <button class="reload-btn" onclick="reloadPlayer()">Relancer le lecteur</button>
+    <div class="controls">
+        <button class="btn btn-reload" onclick="reloadPlayer()">🔄 RÉPARER BUG</button>
+        <button id="nextBtn" class="btn" onclick="nextEpisode()">ÉPISODE SUIVANT ➔</button>
+    </div>
 
     <script>
+        // Remplace ces liens par tes vrais liens d'épisodes
+        const episodes = {
+            2: "https://vidmoly.net/embed-g7d07h39u6xr.html",
+            3: "https://vidmoly.net/embed-7mo2hts1obhm.html"
+        };
+
+        let currentEp = 2;
+
+        function nextEpisode() {
+            if (currentEp === 2) {
+                currentEp = 3;
+                updatePlayer();
+                // On cache le bouton suivant s'il n'y a plus d'épisodes après le 3
+                document.getElementById('nextBtn').style.display = 'none';
+            }
+        }
+
+        function updatePlayer() {
+            const iframe = document.getElementById('videoPlayer');
+            const indicator = document.getElementById('ep-number');
+            
+            // On vide l'iframe pour purger la RAM de la TV
+            iframe.src = 'about:blank';
+            indicator.innerText = currentEp;
+
+            setTimeout(() => {
+                iframe.src = episodes[currentEp];
+                console.log("Passage à l'épisode " + currentEp);
+            }, 300);
+        }
+
         function reloadPlayer() {
             const iframe = document.getElementById('videoPlayer');
             const currentSrc = iframe.src;
-            iframe.src = ''; // Vide la source pour forcer l'arrêt
+            iframe.src = 'about:blank'; 
             setTimeout(() => {
-                iframe.src = currentSrc; // Relance le chargement
-            }, 100);
+                iframe.src = currentSrc;
+            }, 200);
         }
-        
-        console.log("Player optimisé pour GitHub Pages et Smart TV.");
+
+        // Keep-alive pour la TV
+        setInterval(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 15000);
     </script>
 
 </body>
