@@ -37,7 +37,6 @@
             background-color: #000;
         }
 
-        /* Conteneur des contrôles en bas */
         .controls {
             position: fixed;
             bottom: 20px;
@@ -46,7 +45,7 @@
             display: flex;
             justify-content: space-between;
             z-index: 9999;
-            pointer-events: none; /* Permet de cliquer à travers si besoin */
+            pointer-events: none;
         }
 
         .btn {
@@ -58,34 +57,38 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: bold;
-            pointer-events: auto; /* Réactive le clic pour les boutons */
+            pointer-events: auto;
             outline: none;
             transition: 0.2s;
         }
 
+        /* Style spécifique pour le bouton Focus (navigation TV) */
         .btn:focus {
-            background: #2ecc71; /* Vert pour le bouton suivant */
+            background: #2ecc71;
             border-color: #fff;
             transform: scale(1.1);
         }
 
         .btn-reload:focus {
-            background: #e74c3c; /* Rouge pour le bouton reload */
+            background: #e74c3c;
         }
 
         #ep-indicator {
             position: fixed;
             top: 20px;
             left: 20px;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
             z-index: 9999;
         }
     </style>
 </head>
 <body>
 
-    <div id="ep-indicator">Épisode actuel : <span id="ep-number">2</span></div>
+    <div id="ep-indicator">Épisode : <span id="ep-number">2</span></div>
 
     <div class="wrapper">
         <iframe 
@@ -105,10 +108,10 @@
     </div>
 
     <script>
-        // Remplace ces liens par tes vrais liens d'épisodes
+        // --- CONFIGURATION DES ÉPISODES ---
         const episodes = {
-            2: "https://vidmoly.net/embed-g7d07h39u6xr.html",
-            3: "https://vidmoly.net/embed-7mo2hts1obhm.html"
+            2: "URL_DE_TON_EPISODE_2",
+            3: "URL_DE_TON_EPISODE_3"
         };
 
         let currentEp = 2;
@@ -117,7 +120,6 @@
             if (currentEp === 2) {
                 currentEp = 3;
                 updatePlayer();
-                // On cache le bouton suivant s'il n'y a plus d'épisodes après le 3
                 document.getElementById('nextBtn').style.display = 'none';
             }
         }
@@ -126,14 +128,14 @@
             const iframe = document.getElementById('videoPlayer');
             const indicator = document.getElementById('ep-number');
             
-            // On vide l'iframe pour purger la RAM de la TV
+            // Nettoyage radical de la RAM avant changement
             iframe.src = 'about:blank';
             indicator.innerText = currentEp;
 
             setTimeout(() => {
                 iframe.src = episodes[currentEp];
-                console.log("Passage à l'épisode " + currentEp);
-            }, 300);
+                console.log("Chargement épisode " + currentEp);
+            }, 400); // Un peu plus de délai pour les TV lentes
         }
 
         function reloadPlayer() {
@@ -145,7 +147,7 @@
             }, 200);
         }
 
-        // Keep-alive pour la TV
+        // Keep-alive réseau pour éviter la mise en veille
         setInterval(() => {
             window.dispatchEvent(new Event('resize'));
         }, 15000);
