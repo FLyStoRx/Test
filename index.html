@@ -3,154 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Test Séries TV - Épisodes 2 & 3</title>
+    <title>Séries Streaming - Sélection</title>
     <style>
         body, html { 
-            margin: 0; 
-            padding: 0; 
-            width: 100%; 
-            height: 100%; 
-            background-color: #000; 
-            overflow: hidden; 
-            font-family: Arial, sans-serif;
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background-color: #000; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif;
         }
 
-        .wrapper {
-            position: relative;
+        .main-container {
+            display: flex;
+            flex-direction: column;
             width: 100vw;
             height: 100vh;
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        }
+
+        /* Zone Vidéo */
+        .video-wrapper {
+            flex-grow: 1;
+            position: relative;
+            background: #000;
         }
 
         iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-            background-color: #000;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
         }
 
-        .controls {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
+        /* Liste des épisodes optimisée pour le clic/télécommande */
+        .episodes-bar {
+            height: 80px;
+            background: #111;
             display: flex;
-            justify-content: space-between;
-            z-index: 9999;
-            pointer-events: none;
+            align-items: center;
+            padding: 0 20px;
+            gap: 15px;
+            overflow-x: auto;
+            border-top: 1px solid #333;
         }
 
-        .btn {
-            background: rgba(40, 40, 40, 0.9);
-            color: #fff;
-            border: 2px solid #666;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            pointer-events: auto;
-            outline: none;
-            transition: 0.2s;
-        }
-
-        /* Style spécifique pour le bouton Focus (navigation TV) */
-        .btn:focus {
-            background: #2ecc71;
-            border-color: #fff;
-            transform: scale(1.1);
-        }
-
-        .btn-reload:focus {
-            background: #e74c3c;
-        }
-
-        #ep-indicator {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            color: rgba(255, 255, 255, 0.7);
-            background: rgba(0, 0, 0, 0.5);
-            padding: 5px 10px;
+        .ep-btn {
+            background: #222;
+            color: #bbb;
+            border: 1px solid #444;
+            padding: 10px 20px;
             border-radius: 5px;
-            font-size: 14px;
-            z-index: 9999;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: 0.2s;
+            outline: none;
         }
+
+        /* État quand on navigue avec la télécommande */
+        .ep-btn:focus, .ep-btn.active {
+            background: #e74c3c;
+            color: white;
+            border-color: #fff;
+            transform: scale(1.05);
+        }
+
+        .reload-btn {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 20px;
+        }
+
+        /* Cacher la scrollbar mais garder le défilement */
+        .episodes-bar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="ep-indicator">Épisode : <span id="ep-number">2</span></div>
+    <div class="main-container">
+        <div class="video-wrapper">
+            <iframe 
+                id="videoPlayer"
+                src="about:blank" 
+                allow="autoplay; fullscreen" 
+                allowfullscreen
+                sandbox="allow-scripts allow-forms allow-presentation allow-same-origin">
+            </iframe>
+        </div>
 
-    <div class="wrapper">
-        <iframe 
-            id="videoPlayer"
-            src="URL_DE_TON_EPISODE_2" 
-            allow="autoplay; fullscreen" 
-            allowfullscreen
-            loading="lazy"
-            sandbox="allow-scripts allow-forms allow-presentation allow-same-origin"
-            importance="high">
-        </iframe>
-    </div>
-
-    <div class="controls">
-        <button class="btn btn-reload" onclick="reloadPlayer()">🔄 RÉPARER BUG</button>
-        <button id="nextBtn" class="btn" onclick="nextEpisode()">ÉPISODE SUIVANT ➔</button>
+        <div class="episodes-bar">
+            <button class="reload-btn" onclick="reloadPlayer()">🔄 Reset</button>
+            <button class="ep-btn" onclick="loadVideo(2, 'https://vidmoly.net/embed-g7d07h39u6xr.html', this)">Épisode 2</button>
+            <button class="ep-btn" onclick="loadVideo(3, 'https://vidmoly.net/embed-7mo2hts1obhm.html', this)">Épisode 3</button>
+            </div>
     </div>
 
     <script>
-        // --- CONFIGURATION DES ÉPISODES ---
-        const episodes = {
-            2: "URL_DE_TON_EPISODE_2",
-            3: "URL_DE_TON_EPISODE_3"
-        };
-
-        let currentEp = 2;
-
-        function nextEpisode() {
-            if (currentEp === 2) {
-                currentEp = 3;
-                updatePlayer();
-                document.getElementById('nextBtn').style.display = 'none';
-            }
-        }
-
-        function updatePlayer() {
+        function loadVideo(num, url, btn) {
             const iframe = document.getElementById('videoPlayer');
-            const indicator = document.getElementById('ep-number');
             
-            // Nettoyage radical de la RAM avant changement
+            // 1. Nettoyage de la RAM (indispensable pour TV)
             iframe.src = 'about:blank';
-            indicator.innerText = currentEp;
+            
+            // 2. Gestion visuelle des boutons
+            document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
 
+            // 3. Chargement de la nouvelle vidéo après une courte pause
             setTimeout(() => {
-                iframe.src = episodes[currentEp];
-                console.log("Chargement épisode " + currentEp);
-            }, 400); // Un peu plus de délai pour les TV lentes
+                iframe.src = url;
+                console.log("Chargement Episode " + num);
+            }, 300);
         }
 
         function reloadPlayer() {
             const iframe = document.getElementById('videoPlayer');
             const currentSrc = iframe.src;
-            iframe.src = 'about:blank'; 
-            setTimeout(() => {
-                iframe.src = currentSrc;
-            }, 200);
+            iframe.src = 'about:blank';
+            setTimeout(() => { iframe.src = currentSrc; }, 200);
         }
 
-        // Keep-alive réseau pour éviter la mise en veille
-        setInterval(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 15000);
+        // Message par défaut au chargement
+        window.onload = () => {
+            console.log("Système prêt. Sélectionnez un épisode.");
+        };
     </script>
 
 </body>
