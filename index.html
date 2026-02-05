@@ -3,84 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Séries Streaming - Sélection</title>
+    <title>Ma Série TV - Multi-Saisons</title>
     <style>
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background-color: #000; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif;
+        :root {
+            --primary: #e74c3c;
+            --bg-dark: #0a0a0a;
+            --bg-panel: #1a1a1a;
+            --text: #ffffff;
         }
 
-        .main-container {
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background-color: var(--bg-dark); overflow: hidden; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text);
+        }
+
+        .main-layout {
             display: flex;
             flex-direction: column;
             width: 100vw;
             height: 100vh;
         }
 
-        /* Zone Vidéo */
-        .video-wrapper {
+        /* Lecteur Vidéo */
+        .video-container {
             flex-grow: 1;
             position: relative;
             background: #000;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
         }
 
         iframe {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            border: none; background: #000; transition: opacity 0.3s;
         }
 
-        /* Liste des épisodes optimisée pour le clic/télécommande */
-        .episodes-bar {
-            height: 80px;
-            background: #111;
+        /* Panneau de contrôle (Saisons + Épisodes) */
+        .navigation-panel {
+            background: var(--bg-panel);
+            height: 160px;
             display: flex;
-            align-items: center;
-            padding: 0 20px;
-            gap: 15px;
-            overflow-x: auto;
-            border-top: 1px solid #333;
+            flex-direction: column;
+            border-top: 2px solid #333;
+            padding: 10px 0;
         }
 
-        .ep-btn {
-            background: #222;
-            color: #bbb;
-            border: 1px solid #444;
-            padding: 10px 20px;
-            border-radius: 5px;
+        /* Onglets Saisons */
+        .season-tabs {
+            display: flex;
+            padding: 0 20px;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .season-btn {
+            background: transparent;
+            color: #888;
+            border: 2px solid #444;
+            padding: 6px 15px;
+            border-radius: 20px;
             cursor: pointer;
-            white-space: nowrap;
             font-weight: bold;
-            transition: 0.2s;
             outline: none;
         }
 
-        /* État quand on navigue avec la télécommande */
-        .ep-btn:focus, .ep-btn.active {
-            background: #e74c3c;
-            color: white;
+        .season-btn.active, .season-btn:focus {
+            border-color: var(--primary);
+            color: var(--text);
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        /* Grille Épisodes */
+        .episodes-grid {
+            display: flex;
+            gap: 12px;
+            padding: 0 20px 10px 20px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+        }
+
+        .ep-card {
+            min-width: 100px;
+            height: 60px;
+            background: #252525;
+            border: 1px solid #444;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .ep-card:focus, .ep-card.active {
+            background: var(--primary);
             border-color: #fff;
             transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
         }
 
-        .reload-btn {
-            background: #444;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-right: 20px;
+        /* Scrollbar invisible pour TV */
+        .episodes-grid::-webkit-scrollbar { display: none; }
+        
+        #current-info {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(0,0,0,0.7); padding: 5px 15px;
+            border-radius: 20px; font-size: 12px; z-index: 10;
+            border: 1px solid rgba(255,255,255,0.2);
         }
-
-        /* Cacher la scrollbar mais garder le défilement */
-        .episodes-bar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
 
-    <div class="main-container">
-        <div class="video-wrapper">
+    <div class="main-layout">
+        <div class="video-container">
+            <div id="current-info">En attente de lecture...</div>
             <iframe 
-                id="videoPlayer"
+                id="mainPlayer"
                 src="about:blank" 
                 allow="autoplay; fullscreen" 
                 allowfullscreen
@@ -88,42 +131,101 @@
             </iframe>
         </div>
 
-        <div class="episodes-bar">
-            <button class="reload-btn" onclick="reloadPlayer()">🔄 Reset</button>
-            <button class="ep-btn" onclick="loadVideo(2, 'https://vidmoly.net/embed-g7d07h39u6xr.html', this)">Épisode 2</button>
-            <button class="ep-btn" onclick="loadVideo(3, 'https://vidmoly.net/embed-7mo2hts1obhm.html', this)">Épisode 3</button>
-            </div>
+        <div class="navigation-panel">
+            <div class="season-tabs" id="seasonTabs">
+                </div>
+
+            <div class="episodes-grid" id="episodesGrid">
+                </div>
+        </div>
     </div>
 
     <script>
-        function loadVideo(num, url, btn) {
-            const iframe = document.getElementById('videoPlayer');
-            
-            // 1. Nettoyage de la RAM (indispensable pour TV)
-            iframe.src = 'about:blank';
-            
-            // 2. Gestion visuelle des boutons
-            document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-
-            // 3. Chargement de la nouvelle vidéo après une courte pause
-            setTimeout(() => {
-                iframe.src = url;
-                console.log("Chargement Episode " + num);
-            }, 300);
-        }
-
-        function reloadPlayer() {
-            const iframe = document.getElementById('videoPlayer');
-            const currentSrc = iframe.src;
-            iframe.src = 'about:blank';
-            setTimeout(() => { iframe.src = currentSrc; }, 200);
-        }
-
-        // Message par défaut au chargement
-        window.onload = () => {
-            console.log("Système prêt. Sélectionnez un épisode.");
+        // --- CONFIGURATION DES DONNÉES ---
+        // Tu peux ajouter autant de saisons et d'épisodes que tu veux ici
+        const seriesData = {
+            "Saison 1": [
+                { id: 1, url: "https://vidmoly.net/embed-pk2z4wgddenf.html" },
+                { id: 2, url: "https://vidmoly.net/embed-g7d07h39u6xr.html" },
+                { id: 3, url: "https://vidmoly.net/embed-7mo2hts1obhm.html" },
+            ],
+            "Saison 2": [
+                { id: 1, url: "https://vidmoly.net/embed-ouvo0e1v35lr.html" },
+                { id: 2, url: "https://vidmoly.net/embed-ykgejiudyvoj.html" },
+                { id: 3, url: "https://vidmoly.net/embed-9rcraqjn18sq.html" },
+                { id: 4, url: "https://vidmoly.net/embed-kezpom89x26c.html" }               
+            ],
+            "Saison 3": [
+                { id: 1, url: "https://vidmoly.net/embed-zlkmns3ljrwd.html" },
+                { id: 2, url: "https://vidmoly.net/embed-wqiyrymrqsnk.html" },
+                { id: 3, url: "https://vidmoly.net/embed-oz7n0vch2cpj.html" },
+                { id: 4, url: "https://vidmoly.net/embed-gsu1lppma9av.html" },
+                { id: 5, url: "https://vidmoly.net/embed-vhwazc3lalhr.html" },
+                { id: 6, url: "https://vidmoly.net/embed-6nef8xvgclu4.html" }
+            ]
         };
+
+        const seasonTabs = document.getElementById('seasonTabs');
+        const episodesGrid = document.getElementById('episodesGrid');
+        const player = document.getElementById('mainPlayer');
+        const info = document.getElementById('current-info');
+
+        let currentSeason = Object.keys(seriesData)[0];
+
+        // Initialisation du menu
+        function initMenu() {
+            // Créer les boutons de saisons
+            Object.keys(seriesData).forEach(seasonName => {
+                const btn = document.createElement('button');
+                btn.className = 'season-btn';
+                btn.innerText = seasonName;
+                btn.onclick = () => showSeason(seasonName);
+                seasonTabs.appendChild(btn);
+            });
+            showSeason(currentSeason);
+        }
+
+        // Afficher les épisodes d'une saison
+        function showSeason(seasonName) {
+            currentSeason = seasonName;
+            episodesGrid.innerHTML = '';
+            
+            // Update boutons saisons
+            document.querySelectorAll('.season-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === seasonName);
+            });
+
+            seriesData[seasonName].forEach(ep => {
+                const card = document.createElement('button');
+                card.className = 'ep-card';
+                card.innerText = 'EP ' + ep.id;
+                card.onclick = () => playVideo(ep.url, seasonName, ep.id, card);
+                episodesGrid.appendChild(card);
+            });
+        }
+
+        // Fonction de lecture optimisée TV
+        function playVideo(url, season, id, element) {
+            // 1. Purge immédiate
+            player.style.opacity = "0";
+            player.src = 'about:blank';
+            
+            // 2. Feedback visuel
+            document.querySelectorAll('.ep-card').forEach(c => c.classList.remove('active'));
+            element.classList.add('active');
+            info.innerText = `Lecture : ${season} - Épisode ${id}`;
+
+            // 3. Chargement différé pour laisser respirer la RAM
+            setTimeout(() => {
+                player.src = url;
+                player.style.opacity = "1";
+            }, 500);
+        }
+
+        // Anti-veille TV
+        setInterval(() => { window.dispatchEvent(new Event('resize')); }, 15000);
+
+        window.onload = initMenu;
     </script>
 
 </body>
