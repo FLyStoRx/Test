@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>COPYFLIX V3 - Series Fix</title>
+<title>COPYFLIX V3</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="icon" type="image/png" href="favicon.png">
@@ -72,14 +71,18 @@ body.player-open #app-content { visibility: hidden; opacity: 0; }
 
 .row-title { 
     font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; 
-    text-transform: uppercase; background: var(--primary); color: #000;
-    padding: 5px 25px; display: inline-block; transform: skewX(-15deg);
-    box-shadow: 12px 12px 0 #fff; line-height: 1.1;
+    text-transform: uppercase; 
+    background: linear-gradient(135deg, var(--primary) 0%, #991b1b 100%);
+    color: #fff;
+    padding: 8px 30px; display: inline-block; transform: skewX(-15deg);
+    box-shadow: 10px 10px 0 #fff; line-height: 1.1;
 }
 
+.row-title i { margin-right: 15px; transform: skewX(15deg); display: inline-block; font-size: 0.8em; }
+
 .carousel-viewport {
-  display: flex; overflow-x: scroll; padding: 40px 5%; margin-top: -10px; margin-bottom: -10px;
-  gap: 28px; scroll-behavior: smooth; cursor: grab; user-select: none;
+  display: flex; overflow-x: auto; padding: 40px 5%; margin-top: -10px; margin-bottom: -10px;
+  gap: 28px; cursor: grab; user-select: none;
 }
 .carousel-viewport::-webkit-scrollbar { display: none; }
 
@@ -97,7 +100,8 @@ body.player-open #app-content { visibility: hidden; opacity: 0; }
 .content-title { margin-top: 15px; font-size: 1.05rem; font-weight: 800; text-align: center; color: #fff; opacity: 0.4; transition: 0.4s; }
 .content-card:hover .content-title { opacity: 1; color: var(--primary); }
 
-.nav-arrow { position: absolute; top: 55%; transform: translateY(-50%); width: 65px; height: 120px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border: none; color: white; z-index: 2000; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.nav-arrow { position: absolute; top: 55%; transform: translateY(-50%); width: 65px; height: 120px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border: none; color: white; z-index: 2000; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+.nav-arrow:hover { background: var(--primary); color: #fff; }
 .arrow-left { left: 0; border-radius: 0 20px 20px 0; border-right: 2px solid var(--primary); }
 .arrow-right { right: 0; border-radius: 20px 0 0 20px; border-left: 2px solid var(--primary); }
 
@@ -169,7 +173,15 @@ let contentData, pathStack = [], currentPlayingItem = null;
 let registry = new Map(); 
 let currentGlobalFilter = 'all';
 
-const CATEGORIES_DISPLAY = { "Action": "Action", "Comédie": "Comédie", "Horreur": "Horreur", "SF": "Science-fiction", "Animation": "Animation", "Docu": "Documentaire" };
+const CAT_CONFIG = {
+    "Action": { title: "Action", icon: "fa-fire" },
+    "Comédie": { title: "Comédie", icon: "fa-laugh-squint" },
+    "Horreur": { title: "Horreur", icon: "fa-ghost" },
+    "SF": { title: "Science-fiction", icon: "fa-rocket" },
+    "Animation": { title: "Animation", icon: "fa-wand-magic-sparkles" },
+    "Docu": { title: "Documentaire", icon: "fa-camera-retro" }
+};
+
 const CATEGORIES = ["Action", "Comédie", "Horreur", "SF", "Animation", "Docu"];
 
 fetch("data.json").then(r => r.json()).then(json => {
@@ -212,6 +224,44 @@ function initDragScroll(el) {
     });
 }
 
+/**
+ * MOTEUR DE SCROLL FLUIDE MAISON
+ * Cette fonction crée une animation personnalisée pour garantir la fluidité.
+ */
+function smoothScroll(element, target, duration) {
+    const start = element.scrollLeft;
+    const change = target - start;
+    let currentTime = 0;
+    const increment = 20;
+
+    // Fonction d'accélération (easeInOutQuad) pour un effet naturel
+    const easeInOutQuad = (t, b, c, d) => {
+        t /= d/2;
+        if (t < 1) return c/2*t*t + b;
+        t--;
+        return -c/2 * (t*(t-2) - 1) + b;
+    };
+
+    const animateScroll = () => {
+        currentTime += increment;
+        const val = easeInOutQuad(currentTime, start, change, duration);
+        element.scrollLeft = val;
+        if (currentTime < duration) {
+            setTimeout(animateScroll, increment);
+        }
+    };
+    animateScroll();
+}
+
+function scrollCarousel(btn, direction) {
+    const viewport = direction === 'left' ? btn.nextElementSibling : btn.previousElementSibling;
+    const scrollStep = window.innerWidth * 0.75; // Distance du saut
+    const target = direction === 'left' ? viewport.scrollLeft - scrollStep : viewport.scrollLeft + scrollStep;
+    
+    // On lance notre animation personnalisée sur 600ms
+    smoothScroll(viewport, target, 600);
+}
+
 function renderHome() {
   pathStack = []; registry.clear();
   document.getElementById("home-view").style.display = "block";
@@ -229,13 +279,14 @@ function renderHome() {
     });
 
     if(items.length > 0) {
+      const config = CAT_CONFIG[cat];
       const row = document.createElement("div");
       row.className = "category-row";
       row.innerHTML = `
-        <div class="row-header"><h2 class="row-title">${CATEGORIES_DISPLAY[cat]}</h2></div>
-        <button class="nav-arrow arrow-left" onclick="this.nextElementSibling.scrollBy({left:-800, behavior:'smooth'})"><i class="fas fa-chevron-left"></i></button>
+        <div class="row-header"><h2 class="row-title"><i class="fas ${config.icon}"></i>${config.title}</h2></div>
+        <button class="nav-arrow arrow-left" onclick="scrollCarousel(this, 'left')"><i class="fas fa-chevron-left"></i></button>
         <div class="carousel-viewport">${items.map(i => createCardHTML(i)).join('')}</div>
-        <button class="nav-arrow arrow-right" onclick="this.previousElementSibling.scrollBy({left:800, behavior:'smooth'})"><i class="fas fa-chevron-right"></i></button>
+        <button class="nav-arrow arrow-right" onclick="scrollCarousel(this, 'right')"><i class="fas fa-chevron-right"></i></button>
       `;
       container.appendChild(row);
       initDragScroll(row.querySelector('.carousel-viewport'));
@@ -275,45 +326,30 @@ function playMedia(item) {
   document.body.classList.add("no-scroll", "player-open");
   const overlay = document.getElementById("player-overlay");
   overlay.style.display = "block";
-  
+  document.getElementById("app-content").style.visibility = "hidden";
+
+  document.getElementById("player-container").innerHTML = `
+    <iframe id="video-engine" src="${item.video}" allowfullscreen allow="autoplay"></iframe>`;
+    
   document.getElementById("hud-current-name").innerText = item.title;
   document.getElementById("hud-parent-name").innerText = pathStack.length > 0 ? pathStack[0].title : (item.type || "Film");
   
   const seasonHud = document.getElementById("hud-season-name");
-  if (pathStack.length >= 2) {
-      seasonHud.style.display = "block";
-      seasonHud.innerText = pathStack[pathStack.length - 1].title;
-  } else {
-      seasonHud.style.display = "none";
-  }
+  seasonHud.style.display = (pathStack.length >= 2) ? "block" : "none";
+  if(pathStack.length >= 2) seasonHud.innerText = pathStack[pathStack.length - 1].title;
 
   updateNextButton(item);
-  document.getElementById("player-container").innerHTML = `<iframe id="video-engine" src="${item.video}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
   setTimeout(() => overlay.classList.add("active"), 50);
 }
 
 function updateNextButton(item) {
   const nextBtn = document.getElementById("btn-next-universal");
-  const btnText = document.getElementById("next-btn-text");
   nextBtn.style.display = "none";
-
   if (item.type !== "Film" && pathStack.length > 0) {
     const currentSeasonFolder = pathStack[pathStack.length - 1];
     const episodes = currentSeasonFolder.children.filter(c => !c.children || c.video);
     const currentIndex = episodes.findIndex(e => e.title === item.title);
-
-    if (currentIndex < episodes.length - 1) {
-        nextBtn.style.display = "flex";
-        btnText.innerText = "ÉPISODE SUIVANT";
-    } 
-    else if (pathStack.length >= 2) {
-        const seriesRoot = pathStack[pathStack.length - 2];
-        const currentSeasonIndex = seriesRoot.children.findIndex(s => s.title === currentSeasonFolder.title);
-        if (currentSeasonIndex < seriesRoot.children.length - 1) {
-            nextBtn.style.display = "flex";
-            btnText.innerText = "SAISON SUIVANTE";
-        }
-    }
+    if (currentIndex < episodes.length - 1 || pathStack.length >= 2) nextBtn.style.display = "flex";
   }
 }
 
@@ -322,10 +358,8 @@ function handleNextClick() {
   const episodes = currentSeasonFolder.children.filter(c => !c.children || c.video);
   const currentIndex = episodes.findIndex(e => e.title === currentPlayingItem.title);
   
-  let nextItem = null;
-
   if (currentIndex < episodes.length - 1) {
-    nextItem = episodes[currentIndex + 1];
+    playMedia(episodes[currentIndex + 1]);
   } else if (pathStack.length >= 2) {
     const seriesRoot = pathStack[pathStack.length - 2];
     const currentSeasonIndex = seriesRoot.children.findIndex(s => s.title === currentSeasonFolder.title);
@@ -333,12 +367,9 @@ function handleNextClick() {
         const nextSeason = seriesRoot.children[currentSeasonIndex + 1];
         pathStack.pop();
         pathStack.push(nextSeason);
-        nextItem = nextSeason.children.find(c => !c.children || c.video);
+        const firstEp = nextSeason.children.find(c => !c.children || c.video);
+        if (firstEp) playMedia(firstEp);
     }
-  }
-
-  if (nextItem) {
-    playMedia(nextItem);
   }
 }
 
@@ -348,6 +379,7 @@ function closePlayer() {
   setTimeout(() => { 
     overlay.style.display = "none"; 
     document.getElementById("player-container").innerHTML = ""; 
+    document.getElementById("app-content").style.visibility = "visible";
     document.body.classList.remove("no-scroll", "player-open"); 
   }, 500);
 }
