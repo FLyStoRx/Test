@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>COPYFLIX V3 - Series Fix</title>
+<title>COPYFLIX V3 - Full Navigation TV</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="icon" type="image/png" href="favicon.png">
@@ -15,18 +15,12 @@
   --primary-glow: rgba(220, 38, 38, 0.4);
   --bg: #000000;
   --surface: #0a0a0a;
-  --text-muted: #a3a3a3;
   --transition-fluid: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
   --radius: 18px;
   --card-width: 220px;
 }
 
-* { 
-  margin:0; padding:0; box-sizing:border-box; 
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
 body { background: var(--bg); color: #fff; overflow-x: hidden; min-height: 100vh; }
 body.no-scroll { overflow: hidden; }
 
@@ -34,88 +28,83 @@ header {
   position: fixed; top: 0; width: 100%; height: 90px; z-index: 1000;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 5%; transition: var(--transition-fluid);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
 }
-header.scrolled {
-  background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(30px);
-  height: 70px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
+header.scrolled { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(30px); height: 70px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+
 .logo { font-size: 28px; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: -1.5px; }
 .logo span { color: var(--primary); text-shadow: 0 0 25px var(--primary-glow); }
 
 .filter-menu { display: flex; gap: 30px; margin-left: 40px; }
-.filter-btn {
+.filter-btn, .admin-btn {
   background: none; border: none; color: rgba(255,255,255,0.5);
   font-size: 0.9rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 1px; cursor: pointer; transition: 0.3s;
-  position: relative; padding: 5px 0; outline: none;
+  position: relative; padding: 10px 15px; outline: none; border-radius: 10px;
 }
-.filter-btn:hover, .filter-btn.active, .filter-btn.tv-focus { color: #fff; }
+.filter-btn:hover, .filter-btn.active, .filter-btn.tv-focus, .admin-btn.tv-focus { color: #fff; }
+.filter-btn.tv-focus, .admin-btn.tv-focus { background: rgba(255,255,255,0.1); box-shadow: 0 0 0 2px var(--primary); }
+
 .filter-btn.active::after {
-  content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
+  content: ''; position: absolute; bottom: 0; left: 15px; right: 15px; height: 2px;
   background: var(--primary); box-shadow: 0 0 10px var(--primary-glow);
 }
 
 .nav-right { display: flex; align-items: center; gap: 20px; }
 .search-wrapper {
-  background: rgba(255,255,255,0.03); border-radius: 16px; padding: 12px 20px;
+  background: rgba(255,255,255,0.03); border-radius: 16px; padding: 8px 15px;
   display: flex; align-items: center; gap: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.08); transition: 0.3s;
 }
-.search-wrapper input { background: transparent; border: none; color: white; outline: none; width: 200px; }
+.search-wrapper.tv-focus { border-color: var(--primary); background: rgba(255,255,255,0.1); box-shadow: 0 0 15px var(--primary-glow); }
+.search-wrapper input { background: transparent; border: none; color: white; outline: none; width: 180px; }
 
 #app-content { padding-top: 120px; padding-bottom: 100px; transition: opacity 0.5s ease; }
 body.player-open #app-content { visibility: hidden; opacity: 0; }
 
-.category-row { margin-bottom: 80px; position: relative; z-index: 1; }
-.row-header { padding: 0 5% 30px; display: flex; align-items: center; justify-content: center; }
-
+.category-row { margin-bottom: 80px; position: relative; }
+.row-header { padding: 0 5% 30px; display: flex; justify-content: center; }
 .row-title { 
-    font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; 
-    text-transform: uppercase; background: var(--primary); color: #000;
-    padding: 5px 25px; display: inline-block; transform: skewX(-15deg);
-    box-shadow: 12px 12px 0 #fff; line-height: 1.1;
+    font-size: 2.2rem; font-weight: 900; text-transform: uppercase; 
+    background: var(--primary); color: #000; padding: 5px 25px; 
+    transform: skewX(-15deg); box-shadow: 12px 12px 0 #fff;
 }
 
-.carousel-viewport {
-  display: flex; overflow-x: scroll; padding: 40px 5%; margin-top: -10px; margin-bottom: -10px;
-  gap: 28px; scroll-behavior: smooth; cursor: grab; user-select: none;
-}
+.carousel-viewport { display: flex; overflow-x: scroll; padding: 40px 5%; gap: 28px; scroll-behavior: smooth; cursor: grab; }
 .carousel-viewport::-webkit-scrollbar { display: none; }
 
 .content-card { flex: 0 0 var(--card-width); position: relative; cursor: pointer; transition: var(--transition-fluid); outline: none; }
 .poster-wrapper { 
-  position: relative; aspect-ratio: 2/3; border-radius: var(--radius); 
-  overflow: hidden; background: #0f0f0f; border: 2px solid rgba(255,255,255,0.1);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: var(--transition-fluid);
+  aspect-ratio: 2/3; border-radius: var(--radius); overflow: hidden; 
+  background: #0f0f0f; border: 2px solid rgba(255,255,255,0.1); transition: var(--transition-fluid);
 }
 .poster-wrapper img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 
-.content-card:hover, .content-card.tv-focus { transform: translateY(-5px) scale(1.15); z-index: 1000; }
-.content-card:hover .poster-wrapper, .content-card.tv-focus .poster-wrapper { border-color: var(--primary); box-shadow: 0 0 30px var(--primary-glow); }
+.content-card.tv-focus { transform: translateY(-5px) scale(1.15); z-index: 100; }
+.content-card.tv-focus .poster-wrapper { border-color: var(--primary); box-shadow: 0 0 30px var(--primary-glow); }
+.content-card.tv-focus .content-title { opacity: 1; color: var(--primary); }
+.content-title { margin-top: 15px; font-size: 1rem; font-weight: 800; text-align: center; opacity: 0.4; transition: 0.4s; }
 
-.content-title { margin-top: 15px; font-size: 1.05rem; font-weight: 800; text-align: center; color: #fff; opacity: 0.4; transition: 0.4s; }
-.content-card:hover .content-title, .content-card.tv-focus .content-title { opacity: 1; color: var(--primary); }
-
-.nav-arrow { position: absolute; top: 55%; transform: translateY(-50%); width: 65px; height: 120px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border: none; color: white; z-index: 2000; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.arrow-left { left: 0; border-radius: 0 20px 20px 0; border-right: 2px solid var(--primary); }
-.arrow-right { right: 0; border-radius: 20px 0 0 20px; border-left: 2px solid var(--primary); }
+.nav-arrow { position: absolute; top: 60%; transform: translateY(-50%); width: 60px; height: 100px; background: rgba(0,0,0,0.7); border: none; color: white; z-index: 10; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+.arrow-left { left: 0; border-radius: 0 15px 15px 0; }
+.arrow-right { right: 0; border-radius: 15px 0 0 15px; }
 
 #back-arrow { display: none; width: 60px; height: 60px; border-radius: 20px; background: #111; border: 1px solid #333; color: white; align-items: center; justify-content: center; cursor: pointer; margin-left: 5%; margin-bottom: 20px;}
-#back-arrow.tv-focus, #back-arrow:hover { background: var(--primary); transform: scale(1.1); outline: none; }
+#back-arrow.tv-focus { background: var(--primary); transform: scale(1.1); }
 
 /* PLAYER */
 #player-overlay { position: fixed; inset: 0; background: #000; z-index: 3000; display: none; opacity: 0; transition: 0.5s; }
 #player-overlay.active { opacity: 1; }
-#player-hud { position: absolute; inset: 0; z-index: 3100; padding: 40px; background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.9) 100%); display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; opacity: 0; transition: 0.4s; }
+#player-hud { position: absolute; inset: 0; z-index: 3100; padding: 40px; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent, rgba(0,0,0,0.9)); display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; opacity: 0; transition: 0.4s; }
 #player-overlay:hover #player-hud { opacity: 1; }
 .hud-top { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
 .hud-bottom { display: flex; justify-content: center; pointer-events: auto; padding-bottom: 40px; }
-.close-player { width: 55px; height: 55px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); color: #fff; font-size: 1.5rem; }
-.btn-next-ep { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 18px 40px; border-radius: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 15px; backdrop-filter: blur(15px); transition: 0.3s; font-size: 1.1rem; }
-.btn-next-ep:hover { background: var(--primary); border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 10px 20px var(--primary-glow); }
+.close-player { width: 55px; height: 55px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 1.5rem; }
+.btn-next-ep { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 15px 35px; border-radius: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.3s; }
+.btn-next-ep:hover { background: var(--primary); transform: translateY(-3px); }
 #player-container { width: 100%; height: 100%; }
 iframe { width: 100%; height: 100%; border: none; }
-#search-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 60px 40px; padding: 40px 5% 100px; }
+#search-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 40px; padding: 0 5%; }
 </style>
 </head>
 
@@ -125,21 +114,23 @@ iframe { width: 100%; height: 100%; border: none; }
     <div style="display: flex; align-items: center;">
       <div class="logo" onclick="location.reload()">COPY<span>FLIX</span></div>
       <div class="filter-menu">
-        <button class="filter-btn active" onclick="setGlobalFilter('all', this)">Tout</button>
-        <button class="filter-btn" onclick="setGlobalFilter('Série', this)">Séries</button>
-        <button class="filter-btn" onclick="setGlobalFilter('Film', this)">Films</button>
+        <button class="filter-btn active" data-nav="menu" onclick="setGlobalFilter('all', this)">Tout</button>
+        <button class="filter-btn" data-nav="menu" onclick="setGlobalFilter('Série', this)">Séries</button>
+        <button class="filter-btn" data-nav="menu" onclick="setGlobalFilter('Film', this)">Films</button>
       </div>
     </div>
     <div class="nav-right">
-      <div class="search-wrapper">
+      <div class="search-wrapper" id="search-nav-box" data-nav="menu">
         <i class="fa-solid fa-magnifying-glass" style="color:var(--primary)"></i>
         <input type="text" id="mainSearch" placeholder="Rechercher...">
       </div>
-      <button style="background:none; border:none; color:white; cursor:pointer; font-size:1.6rem;" onclick="window.open('admin/login.html','_blank')"><i class="fa-solid fa-user-shield"></i></button>
+      <button class="admin-btn" data-nav="menu" onclick="window.open('admin/login.html','_blank')">
+        <i class="fa-solid fa-user-shield" style="font-size:1.4rem;"></i>
+      </button>
     </div>
   </header>
 
-  <div id="back-arrow" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></div>
+  <div id="back-arrow" data-nav="back" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></div>
   <div id="home-view"></div>
   <div id="search-grid"></div>
 </div>
@@ -148,8 +139,8 @@ iframe { width: 100%; height: 100%; border: none; }
   <div id="player-hud">
     <div class="hud-top">
       <div>
-        <div id="hud-parent-name" style="color:var(--primary); font-weight:900; font-size:1.1rem; text-transform:uppercase; letter-spacing:2px;"></div>
-        <div id="hud-season-name" style="color:rgba(255,255,255,0.6); font-weight:700; font-size:1rem; margin: 6px 0;"></div>
+        <div id="hud-parent-name" style="color:var(--primary); font-weight:900; font-size:1.1rem; text-transform:uppercase;"></div>
+        <div id="hud-season-name" style="color:rgba(255,255,255,0.6); font-weight:700; font-size:1rem; margin: 5px 0;"></div>
         <h2 id="hud-current-name" style="font-size:2.2rem; font-weight:900;"></h2>
       </div>
       <div class="close-player" onclick="closePlayer()"><i class="fa-solid fa-xmark"></i></div>
@@ -169,9 +160,6 @@ let registry = new Map();
 let currentFocusElement = null;
 let currentGlobalFilter = 'all';
 
-const CATEGORIES_DISPLAY = { "Action": "Action", "Comédie": "Comédie", "Horreur": "Horreur", "SF": "Science-fiction", "Animation": "Animation", "Docu": "Documentaire" };
-const CATEGORIES = ["Action", "Comédie", "Horreur", "SF", "Animation", "Docu"];
-
 fetch("data.json").then(r => r.json()).then(json => {
   contentData = json;
   renderHome();
@@ -182,8 +170,7 @@ function getDeepType(item) {
     if (item.type === "Série" || item.type === "Film") return item.type;
     if (item.video) return "Film";
     if (item.children && item.children.length > 0) {
-        const hasSubFolder = item.children.some(c => c.children && c.children.length > 0);
-        if (hasSubFolder) return "Série";
+        if (item.children.some(c => c.children && c.children.length > 0)) return "Série";
         for (let child of item.children) {
             const found = getDeepType(child);
             if (found) return found;
@@ -199,59 +186,81 @@ function setGlobalFilter(filter, btn) {
     renderHome();
 }
 
-function initDragScroll(el) {
-    let isDown = false, startX, scrollLeft;
-    el.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - el.offsetLeft; scrollLeft = el.scrollLeft; el.style.cursor='grabbing'; });
-    el.addEventListener('mouseleave', () => { isDown = false; });
-    el.addEventListener('mouseup', () => { isDown = false; el.style.cursor='grab'; });
-    el.addEventListener('mousemove', (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - el.offsetLeft;
-        const walk = (x - startX) * 2;
-        el.scrollLeft = scrollLeft - walk;
-    });
-}
-
+// --- MOTEUR DE NAVIGATION TV COMPLET ---
 function initSpatialNavigation() {
     window.addEventListener('keydown', (e) => {
-        if (document.body.classList.contains('player-open') || document.activeElement.tagName === 'INPUT') return;
-        const focusables = Array.from(document.querySelectorAll('.content-card, #back-arrow, .filter-btn'));
-        if (!currentFocusElement) { setFocus(focusables[0]); return; }
+        if (document.body.classList.contains('player-open')) return;
+        
+        // Liste de TOUS les éléments navigables
+        const focusables = Array.from(document.querySelectorAll('.content-card, .filter-btn, .admin-btn, .search-wrapper, #back-arrow'));
+        
+        if (!currentFocusElement || !document.body.contains(currentFocusElement)) { 
+            setFocus(focusables[0]); 
+            return; 
+        }
+
+        // Si on est dans l'input, on ne navigue que si on appuie sur Echap ou Bas
+        if (document.activeElement.tagName === 'INPUT' && e.key !== 'ArrowDown' && e.key !== 'Escape') return;
+
         let next = null;
         if (e.key === 'ArrowRight') next = findNearest(currentFocusElement, focusables, 'right');
         else if (e.key === 'ArrowLeft') next = findNearest(currentFocusElement, focusables, 'left');
         else if (e.key === 'ArrowDown') next = findNearest(currentFocusElement, focusables, 'down');
         else if (e.key === 'ArrowUp') next = findNearest(currentFocusElement, focusables, 'up');
-        else if (e.key === 'Enter') { currentFocusElement.click(); return; }
-        if (next) { setFocus(next); e.preventDefault(); }
+        else if (e.key === 'Enter') {
+            if (currentFocusElement.id === 'search-nav-box') {
+                document.getElementById('mainSearch').focus();
+            } else {
+                currentFocusElement.click();
+            }
+            return;
+        }
+
+        if (next) { 
+            setFocus(next); 
+            e.preventDefault(); 
+        }
     });
 }
 
 function setFocus(el) {
     if (!el) return;
     if (currentFocusElement) currentFocusElement.classList.remove('tv-focus');
+    document.activeElement.blur(); // Retire le focus de l'input si besoin
+
     currentFocusElement = el;
     currentFocusElement.classList.add('tv-focus');
-    currentFocusElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+
+    // Scroll automatique
+    const isMenu = el.getAttribute('data-nav') === 'menu';
+    if (isMenu) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }
 }
 
 function findNearest(current, all, direction) {
     const r1 = current.getBoundingClientRect();
+    const c1 = { x: r1.left + r1.width/2, y: r1.top + r1.height/2 };
     let bestDist = Infinity, bestEl = null;
+
     all.forEach(el => {
         if (el === current || el.offsetParent === null) return;
         const r2 = el.getBoundingClientRect();
-        const c1 = { x: r1.left + r1.width/2, y: r1.top + r1.height/2 };
         const c2 = { x: r2.left + r2.width/2, y: r2.top + r2.height/2 };
-        let v = false;
-        if (direction === 'right') v = c2.x > c1.x + 10 && Math.abs(c2.y - c1.y) < r1.height;
-        if (direction === 'left')  v = c2.x < c1.x - 10 && Math.abs(c2.y - c1.y) < r1.height;
-        if (direction === 'down')  v = c2.y > c1.y + 10;
-        if (direction === 'up')    v = c2.y < c1.y - 10;
-        if (v) {
-            const d = Math.sqrt(Math.pow(c2.x-c1.x,2) + Math.pow(c2.y-c1.y,2));
-            if (d < bestDist) { bestDist = d; bestEl = el; }
+        const dx = c2.x - c1.x;
+        const dy = c2.y - c1.y;
+        
+        let isMatched = false;
+        if (direction === 'right' && dx > 10 && Math.abs(dy) < r1.height * 1.5) isMatched = true;
+        if (direction === 'left' && dx < -10 && Math.abs(dy) < r1.height * 1.5) isMatched = true;
+        if (direction === 'down' && dy > 10) isMatched = true;
+        if (direction === 'up' && dy < -10) isMatched = true;
+
+        if (isMatched) {
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < bestDist) { bestDist = dist; bestEl = el; }
         }
     });
     return bestEl;
@@ -269,21 +278,19 @@ function renderHome() {
     const items = [...contentData.folders, ...contentData.films].filter(i => {
         if (i.active === false || i.category !== cat) return false;
         const type = getDeepType(i);
-        if (currentGlobalFilter === 'all') return true;
-        return type === currentGlobalFilter;
+        return currentGlobalFilter === 'all' || type === currentGlobalFilter;
     });
 
     if(items.length > 0) {
       const row = document.createElement("div");
       row.className = "category-row";
       row.innerHTML = `
-        <div class="row-header"><h2 class="row-title">${CATEGORIES_DISPLAY[cat]}</h2></div>
+        <div class="row-header"><h2 class="row-title">${cat === 'SF' ? 'Science-fiction' : (cat === 'Docu' ? 'Documentaire' : cat)}</h2></div>
         <button class="nav-arrow arrow-left" onclick="this.nextElementSibling.scrollBy({left:-800, behavior:'smooth'})"><i class="fas fa-chevron-left"></i></button>
         <div class="carousel-viewport">${items.map(i => createCardHTML(i)).join('')}</div>
         <button class="nav-arrow arrow-right" onclick="this.previousElementSibling.scrollBy({left:800, behavior:'smooth'})"><i class="fas fa-chevron-right"></i></button>
       `;
       container.appendChild(row);
-      initDragScroll(row.querySelector('.carousel-viewport'));
     }
   });
 }
@@ -291,7 +298,7 @@ function renderHome() {
 function createCardHTML(item) {
   const id = Math.random().toString(36).substr(2, 9);
   registry.set(id, item);
-  return `<div class="content-card" onclick="handleCardClick('${id}')"><div class="poster-wrapper"><img src="${item.image}"></div><div class="content-title">${item.title}</div></div>`;
+  return `<div class="content-card" tabindex="0" onclick="handleCardClick('${id}')"><div class="poster-wrapper"><img src="${item.image}"></div><div class="content-title">${item.title}</div></div>`;
 }
 
 function handleCardClick(id) {
@@ -320,22 +327,13 @@ function playMedia(item) {
   document.body.classList.add("no-scroll", "player-open");
   const overlay = document.getElementById("player-overlay");
   overlay.style.display = "block";
-  
-  // HUD INFO
   document.getElementById("hud-current-name").innerText = item.title;
   document.getElementById("hud-parent-name").innerText = pathStack.length > 0 ? pathStack[0].title : (item.type || "Film");
-  
-  // RESTAURATION SAISON INFO
-  const seasonHud = document.getElementById("hud-season-name");
-  if (pathStack.length >= 2) {
-      seasonHud.style.display = "block";
-      seasonHud.innerText = pathStack[pathStack.length - 1].title;
-  } else {
-      seasonHud.style.display = "none";
-  }
-
+  const sHud = document.getElementById("hud-season-name");
+  if (pathStack.length >= 2) { sHud.style.display = "block"; sHud.innerText = pathStack[pathStack.length-1].title; }
+  else { sHud.style.display = "none"; }
   updateNextButton(item);
-  document.getElementById("player-container").innerHTML = `<iframe id="video-engine" src="${item.video}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+  document.getElementById("player-container").innerHTML = `<iframe src="${item.video}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
   setTimeout(() => overlay.classList.add("active"), 50);
 }
 
@@ -343,64 +341,40 @@ function updateNextButton(item) {
   const nextBtn = document.getElementById("btn-next-universal");
   const btnText = document.getElementById("next-btn-text");
   nextBtn.style.display = "none";
-
   if (item.type !== "Film" && pathStack.length > 0) {
-    const currentSeasonFolder = pathStack[pathStack.length - 1];
-    const episodes = currentSeasonFolder.children.filter(c => !c.children || c.video);
-    const currentIndex = episodes.findIndex(e => e.title === item.title);
-
-    // Cas 1 : Il reste des épisodes dans la saison
-    if (currentIndex < episodes.length - 1) {
-        nextBtn.style.display = "flex";
-        btnText.innerText = "ÉPISODE SUIVANT";
-    } 
-    // Cas 2 : Dernier épisode mais il y a une saison suivante
+    const curSeason = pathStack[pathStack.length - 1];
+    const eps = curSeason.children.filter(c => !c.children || c.video);
+    const idx = eps.findIndex(e => e.title === item.title);
+    if (idx < eps.length - 1) { nextBtn.style.display = "flex"; btnText.innerText = "ÉPISODE SUIVANT"; }
     else if (pathStack.length >= 2) {
-        const seriesRoot = pathStack[pathStack.length - 2];
-        const currentSeasonIndex = seriesRoot.children.findIndex(s => s.title === currentSeasonFolder.title);
-        if (currentSeasonIndex < seriesRoot.children.length - 1) {
-            nextBtn.style.display = "flex";
-            btnText.innerText = "SAISON SUIVANTE";
-        }
+        const root = pathStack[pathStack.length - 2];
+        const sIdx = root.children.findIndex(s => s.title === curSeason.title);
+        if (sIdx < root.children.length - 1) { nextBtn.style.display = "flex"; btnText.innerText = "SAISON SUIVANTE"; }
     }
   }
 }
 
 function handleNextClick() {
-  const currentSeasonFolder = pathStack[pathStack.length - 1];
-  const episodes = currentSeasonFolder.children.filter(c => !c.children || c.video);
-  const currentIndex = episodes.findIndex(e => e.title === currentPlayingItem.title);
-  
-  let nextItem = null;
-
-  if (currentIndex < episodes.length - 1) {
-    // Prochain épisode
-    nextItem = episodes[currentIndex + 1];
-  } else if (pathStack.length >= 2) {
-    // Prochaine saison
-    const seriesRoot = pathStack[pathStack.length - 2];
-    const currentSeasonIndex = seriesRoot.children.findIndex(s => s.title === currentSeasonFolder.title);
-    if (currentSeasonIndex < seriesRoot.children.length - 1) {
-        const nextSeason = seriesRoot.children[currentSeasonIndex + 1];
-        pathStack.pop(); // On sort de la saison actuelle
-        pathStack.push(nextSeason); // On entre dans la nouvelle
-        nextItem = nextSeason.children.find(c => !c.children || c.video);
+  const curSeason = pathStack[pathStack.length - 1];
+  const eps = curSeason.children.filter(c => !c.children || c.video);
+  const idx = eps.findIndex(e => e.title === currentPlayingItem.title);
+  let next = null;
+  if (idx < eps.length - 1) next = eps[idx + 1];
+  else if (pathStack.length >= 2) {
+    const root = pathStack[pathStack.length - 2];
+    const sIdx = root.children.findIndex(s => s.title === curSeason.title);
+    if (sIdx < root.children.length - 1) {
+        const nS = root.children[sIdx + 1]; pathStack.pop(); pathStack.push(nS);
+        next = nS.children.find(c => !c.children || c.video);
     }
   }
-
-  if (nextItem) {
-    playMedia(nextItem);
-  }
+  if (next) playMedia(next);
 }
 
 function closePlayer() {
-  const overlay = document.getElementById("player-overlay");
-  overlay.classList.remove("active");
-  setTimeout(() => { 
-    overlay.style.display = "none"; 
-    document.getElementById("player-container").innerHTML = ""; 
-    document.body.classList.remove("no-scroll", "player-open"); 
-  }, 500);
+  const o = document.getElementById("player-overlay");
+  o.classList.remove("active");
+  setTimeout(() => { o.style.display = "none"; document.getElementById("player-container").innerHTML = ""; document.body.classList.remove("no-scroll", "player-open"); }, 500);
 }
 
 document.getElementById("mainSearch").addEventListener("input", (e) => {
