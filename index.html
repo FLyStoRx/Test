@@ -36,7 +36,7 @@ header {
   padding: 0 5%; transition: var(--transition-fluid);
 }
 header.scrolled {
-  background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(30px);
+  background: rgba(0, 0, 0, 0.9); /* Plus opaque pour la TV */
   height: 70px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 .logo { font-size: 28px; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: -1.5px; }
@@ -64,7 +64,6 @@ header.scrolled {
 .search-wrapper input { background: transparent; border: none; color: white; outline: none; width: 200px; }
 
 #app-content { padding-top: 120px; padding-bottom: 100px; transition: opacity 0.5s ease; }
-body.player-open #app-content { visibility: hidden; opacity: 0; }
 
 .category-row { margin-bottom: 80px; position: relative; z-index: 1; }
 .row-header { padding: 0 5% 30px; display: flex; align-items: center; justify-content: center; }
@@ -100,7 +99,7 @@ body.player-open #app-content { visibility: hidden; opacity: 0; }
 .content-title { margin-top: 15px; font-size: 1.05rem; font-weight: 800; text-align: center; color: #fff; opacity: 0.4; transition: 0.4s; }
 .content-card:hover .content-title { opacity: 1; color: var(--primary); }
 
-.nav-arrow { position: absolute; top: 55%; transform: translateY(-50%); width: 65px; height: 120px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border: none; color: white; z-index: 2000; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+.nav-arrow { position: absolute; top: 55%; transform: translateY(-50%); width: 65px; height: 120px; background: rgba(0,0,0,0.8); border: none; color: white; z-index: 2000; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
 .nav-arrow:hover { background: var(--primary); color: #fff; }
 .arrow-left { left: 0; border-radius: 0 20px 20px 0; border-right: 2px solid var(--primary); }
 .arrow-right { right: 0; border-radius: 20px 0 0 20px; border-left: 2px solid var(--primary); }
@@ -111,14 +110,14 @@ body.player-open #app-content { visibility: hidden; opacity: 0; }
 /* PLAYER */
 #player-overlay { position: fixed; inset: 0; background: #000; z-index: 3000; display: none; opacity: 0; transition: 0.5s; }
 #player-overlay.active { opacity: 1; }
-#player-hud { position: absolute; inset: 0; z-index: 3100; padding: 40px; background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.9) 100%); display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; opacity: 0; transition: 0.4s; }
+#player-hud { position: absolute; inset: 0; z-index: 3100; padding: 40px; background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.95) 100%); display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; opacity: 0; transition: 0.4s; }
 #player-overlay:hover #player-hud { opacity: 1; }
 .hud-top { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
 .hud-bottom { display: flex; justify-content: center; pointer-events: auto; padding-bottom: 40px; }
-.close-player { width: 55px; height: 55px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); color: #fff; font-size: 1.5rem; }
-.btn-next-ep { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 18px 40px; border-radius: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 15px; backdrop-filter: blur(15px); transition: 0.3s; font-size: 1.1rem; }
+.close-player { width: 55px; height: 55px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 1.5rem; }
+.btn-next-ep { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 18px 40px; border-radius: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.3s; font-size: 1.1rem; }
 .btn-next-ep:hover { background: var(--primary); border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 10px 20px var(--primary-glow); }
-#player-container { width: 100%; height: 100%; }
+#player-container { width: 100%; height: 100%; background: #000; }
 iframe { width: 100%; height: 100%; border: none; }
 #search-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 60px 40px; padding: 40px 5% 100px; }
 </style>
@@ -172,6 +171,8 @@ iframe { width: 100%; height: 100%; border: none; }
 let contentData, pathStack = [], currentPlayingItem = null;
 let registry = new Map(); 
 let currentGlobalFilter = 'all';
+let tempMainContent = null; // Stockage de sécurité pour la RAM
+let lastScrollPos = 0;
 
 const CAT_CONFIG = {
     "Action": { title: "Action", icon: "fa-fire" },
@@ -224,50 +225,41 @@ function initDragScroll(el) {
     });
 }
 
-/**
- * MOTEUR DE SCROLL FLUIDE MAISON
- * Cette fonction crée une animation personnalisée pour garantir la fluidité.
- */
 function smoothScroll(element, target, duration) {
     const start = element.scrollLeft;
     const change = target - start;
     let currentTime = 0;
     const increment = 20;
-
-    // Fonction d'accélération (easeInOutQuad) pour un effet naturel
     const easeInOutQuad = (t, b, c, d) => {
         t /= d/2;
         if (t < 1) return c/2*t*t + b;
         t--;
         return -c/2 * (t*(t-2) - 1) + b;
     };
-
     const animateScroll = () => {
         currentTime += increment;
         const val = easeInOutQuad(currentTime, start, change, duration);
         element.scrollLeft = val;
-        if (currentTime < duration) {
-            setTimeout(animateScroll, increment);
-        }
+        if (currentTime < duration) setTimeout(animateScroll, increment);
     };
     animateScroll();
 }
 
 function scrollCarousel(btn, direction) {
     const viewport = direction === 'left' ? btn.nextElementSibling : btn.previousElementSibling;
-    const scrollStep = window.innerWidth * 0.75; // Distance du saut
+    const scrollStep = window.innerWidth * 0.75;
     const target = direction === 'left' ? viewport.scrollLeft - scrollStep : viewport.scrollLeft + scrollStep;
-    
-    // On lance notre animation personnalisée sur 600ms
     smoothScroll(viewport, target, 600);
 }
 
 function renderHome() {
   pathStack = []; registry.clear();
+  const container = document.getElementById("home-view");
+  if(!container) return;
+  
   document.getElementById("home-view").style.display = "block";
   document.getElementById("search-grid").style.display = "none";
   document.getElementById("back-arrow").style.display = "none";
-  const container = document.getElementById("home-view");
   container.innerHTML = "";
   
   CATEGORIES.forEach(cat => {
@@ -323,13 +315,26 @@ function goBack() {
 
 function playMedia(item) {
   currentPlayingItem = item;
-  document.body.classList.add("no-scroll", "player-open");
+  
+  // 1. Sauvegarde et purge radicale pour libérer la RAM TV
+  lastScrollPos = window.scrollY;
+  const app = document.getElementById("app-content");
+  tempMainContent = app.innerHTML; // On aspire le HTML
+  app.innerHTML = ""; // On vide physiquement le DOM
+  
+  document.body.classList.add("no-scroll");
   const overlay = document.getElementById("player-overlay");
   overlay.style.display = "block";
-  document.getElementById("app-content").style.visibility = "hidden";
 
-  document.getElementById("player-container").innerHTML = `
-    <iframe id="video-engine" src="${item.video}" allowfullscreen allow="autoplay"></iframe>`;
+  // 2. Création propre de l'iframe (destruction de l'ancienne si présente)
+  const container = document.getElementById("player-container");
+  container.innerHTML = ""; 
+  const ifrm = document.createElement("iframe");
+  ifrm.id = "video-engine";
+  ifrm.src = item.video;
+  ifrm.allowFullscreen = true;
+  ifrm.allow = "autoplay";
+  container.appendChild(ifrm);
     
   document.getElementById("hud-current-name").innerText = item.title;
   document.getElementById("hud-parent-name").innerText = pathStack.length > 0 ? pathStack[0].title : (item.type || "Film");
@@ -376,11 +381,26 @@ function handleNextClick() {
 function closePlayer() {
   const overlay = document.getElementById("player-overlay");
   overlay.classList.remove("active");
+  
+  // Destruction propre du lecteur
+  const ifrm = document.getElementById("video-engine");
+  if(ifrm) ifrm.src = "about:blank";
+
   setTimeout(() => { 
     overlay.style.display = "none"; 
     document.getElementById("player-container").innerHTML = ""; 
-    document.getElementById("app-content").style.visibility = "visible";
-    document.body.classList.remove("no-scroll", "player-open"); 
+    
+    // Réinjection du site
+    const app = document.getElementById("app-content");
+    app.innerHTML = tempMainContent;
+    
+    document.body.classList.remove("no-scroll"); 
+    window.scrollTo(0, lastScrollPos); // On remet l'utilisateur au bon endroit
+
+    // Réinitialisation des événements sur les carrousels après réinjection
+    document.querySelectorAll('.carousel-viewport').forEach(v => initDragScroll(v));
+    
+    tempMainContent = null; // On vide la variable de secours
   }, 500);
 }
 
@@ -397,7 +417,10 @@ document.getElementById("mainSearch").addEventListener("input", (e) => {
   grid.innerHTML = found.map(i => createCardHTML(i)).join('');
 });
 
-window.onscroll = () => document.getElementById("mainNav").classList.toggle("scrolled", window.scrollY > 50);
+window.onscroll = () => {
+    const nav = document.getElementById("mainNav");
+    if(nav) nav.classList.toggle("scrolled", window.scrollY > 50);
+}
 </script>
 </body>
 </html>
