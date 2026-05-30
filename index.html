@@ -32,7 +32,7 @@
             background-color: #0056b3;
         }
 
-        /* Modale plein écran pour mobile et TV */
+        /* Modale plein écran */
         .modal {
             display: none;
             position: fixed;
@@ -44,27 +44,23 @@
             background-color: #000000;
         }
 
-        /* Conteneur qui prend 100% de la modale */
         .modal-content {
             position: relative;
             width: 100%;
             height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
-        /* Bouton pour fermer adapté aux TV et Mobiles (gros et bien visible) */
+        /* Bouton Fermer */
         .close {
             position: absolute;
             top: 20px;
             right: 20px;
             color: white;
-            font-size: 40px;
+            font-size: 35px;
             font-weight: bold;
             cursor: pointer;
             z-index: 10000;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
             width: 50px;
             height: 50px;
             display: flex;
@@ -74,21 +70,18 @@
             user-select: none;
         }
 
-        /* Remplissage total de l'écran */
+        /* Conteneur plein écran pour l'iframe */
         .video-container {
             width: 100%;
             height: 100%;
-            position: relative;
             background: #000;
         }
 
         .video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             border: 0;
+            display: block;
         }
     </style>
 </head>
@@ -100,7 +93,13 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <div class="video-container">
-                <iframe id="videoIframe" src="" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe>
+                <iframe 
+                    id="videoIframe" 
+                    src="" 
+                    allow="autoplay; fullscreen; encrypted-media" 
+                    sandbox="allow-scripts opacity allow-same-origin allow-forms allow-presentation"
+                    allowfullscreen>
+                </iframe>
             </div>
         </div>
     </div>
@@ -108,25 +107,32 @@
     <script>
         const modal = document.getElementById("videoModal");
         const iframe = document.getElementById("videoIframe");
-        // Lien de la vidéo
         const videoSrc = "https://playmogo.com/e/qfli992danv5";
 
         function openModal() {
+            // Détection si l'utilisateur est sur une Smart TV ou un environnement mobile très restreint
+            const isTVOrMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|SmartTV|Macintosh/i.test(navigator.userAgent);
+
+            // Sur certaines TV/mobiles, l'iframe externe est totalement bloquée par le constructeur.
+            // On utilise alors le Fallback : ouverture directe du flux pour garantir que la flèche apparaisse.
+            if (isTVOrMobile && window.innerWidth < 1024) { 
+                const newWindow = window.open(videoSrc, '_blank');
+                if (newWindow) return; // Si la fenêtre s'ouvre, on stoppe la modale parente
+            }
+
+            // Sinon, ouverture classique dans la modale plein écran optimisée
             modal.style.display = "block";
             iframe.src = videoSrc;
             
-            // Force le focus sur l'iframe pour que la télécommande de la TV fonctionne immédiatement dessus
             setTimeout(() => {
                 iframe.focus();
-            }, 300);
+            }, 400);
         }
 
         function closeModal() {
             modal.style.display = "none";
-            iframe.src = ""; // Arrête la vidéo et libère la mémoire
+            iframe.src = ""; 
         }
-
-        // Sur TV et Mobile, on évite la fermeture par clic n'importe où pour ne pas bloquer le bouton Play d'origine
     </script>
 
 </body>
