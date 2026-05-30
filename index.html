@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lecteur Vidéo Hybride</title>
+    <title>Lecteur Vidéo Standard Modale</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,17 +16,17 @@
         }
 
         .btn-video {
-            padding: 18px 36px;
-            font-size: 20px;
-            font-weight: bold;
+            padding: 15px 30px;
+            font-size: 18px;
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
             cursor: pointer;
+            font-weight: bold;
         }
 
-        /* Modale pour PC uniquement */
+        /* Modale Plein Écran */
         .modal {
             display: none;
             position: fixed;
@@ -42,6 +42,9 @@
             position: relative;
             width: 100%;
             height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .close {
@@ -49,51 +52,58 @@
             top: 20px;
             right: 20px;
             color: white;
-            font-size: 35px;
+            font-size: 40px;
             cursor: pointer;
             z-index: 10000;
+            background: rgba(0,0,0,0.5);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
         }
 
-        iframe {
+        /* Lecteur vidéo HTML5 natif */
+        video {
             width: 100%;
             height: 100%;
-            border: 0;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
     </style>
 </head>
 <body>
 
-    <button class="btn-video" onclick="gererLecture()">Regarder la vidéo</button>
+    <button class="btn-video" onclick="openModal()">Regarder la vidéo</button>
 
     <div id="videoModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            <iframe id="videoIframe" src="" allowfullscreen></iframe>
+            <video id="monLecteur" controls playsinline>
+                <source src="URL_DE_VOTRE_VIDEO.mp4" type="video/mp4">
+                Votre navigateur ne supporte pas la lecture de vidéos.
+            </video>
         </div>
     </div>
 
     <script>
         const modal = document.getElementById("videoModal");
-        const iframe = document.getElementById("videoIframe");
-        const videoSrc = "https://playmogo.com/e/qfli992danv5";
+        const video = document.getElementById("monLecteur");
 
-        function gererLecture() {
-            // Détection des mobiles, tablettes et Smart TV
-            const estRestriction = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|SmartTV|Tizen|WebOS/i.test(navigator.userAgent);
-
-            if (estRestriction) {
-                // Sur Téléphone et TV : On ouvre directement le lien pour garantir que la flèche s'affiche
-                window.location.href = videoSrc;
-            } else {
-                // Sur PC : On ouvre la modale classique
-                modal.style.display = "block";
-                iframe.src = videoSrc;
-            }
+        function openModal() {
+            modal.style.display = "block";
+            video.load(); // Recharge la vidéo proprement
+            video.play().catch(error => {
+                console.log("Lecture automatique bloquée, l'utilisateur doit cliquer sur Play.");
+            });
         }
 
         function closeModal() {
             modal.style.display = "none";
-            iframe.src = "";
+            video.pause(); // Coupe le son et met en pause
+            video.currentTime = 0; // Remet à zéro
         }
     </script>
 
