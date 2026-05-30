@@ -64,7 +64,7 @@
             font-size: 30px;
             font-weight: bold;
             cursor: pointer;
-            z-index: 100001;
+            z-index: 100002; /* Toujours au-dessus de tout */
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid rgba(255, 255, 255, 0.3);
             width: 50px;
@@ -84,42 +84,29 @@
             background: #000;
         }
 
-        .video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100% !important;
-            height: 100% !important;
-            border: 0 !important;
-            display: block;
-        }
-
-        /* LA GRANDE FLÈCHE FORCÉE (Invisible au début, apparaît sur TV/Mobile si besoin) */
-        .fake-play-overlay {
+        /* Notre flèche personnalisée (en arrière-plan) */
+        .fake-play-backdrop {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.4);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 100000; /* Placé juste au-dessus de l'iframe pour capter le clic */
-            cursor: pointer;
+            z-index: 100000; /* Derrière l'iframe au début */
+            background-color: #000000;
         }
 
-        /* Triangle de la flèche de lecture */
         .play-button-icon {
             width: 90px;
             height: 90px;
-            background-color: rgba(0, 123, 255, 0.9);
+            background-color: #007bff;
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 0 30px rgba(0, 123, 255, 0.5);
-            transition: transform 0.2s;
+            box-shadow: 0 0 30px rgba(0, 123, 255, 0.6);
         }
 
         .play-button-icon::after {
@@ -130,12 +117,27 @@
             border-style: solid;
             border-width: 20px 0 20px 35px;
             border-color: transparent transparent transparent #ffffff;
-            margin-left: 8px; /* Centre visuellement le triangle */
+            margin-left: 8px;
         }
 
-        .fake-play-overlay:hover .play-button-icon {
-            transform: scale(1.1);
-            background-color: #007bff;
+        /* L'iframe recouvre TRÈS EXACTEMENT la flèche mais reste invisible (0.001) */
+        /* pour intercepter le premier vrai clic obligatoire exigé par la TV ou le Mobile */
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+            border: 0 !important;
+            display: block;
+            z-index: 100001; /* Devant notre flèche */
+            opacity: 0.001; 
+            transition: opacity 0.15s ease-in-out;
+        }
+
+        /* Classe active injectée en JS dès que le premier clic a eu lieu */
+        .video-container iframe.activated {
+            opacity: 1 !important;
         }
     </style>
 </head>
@@ -147,8 +149,8 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             
-            <div class="video-container">
-                <div id="fakePlay" class="fake-play-overlay" onclick="startVideo()">
+            <div class="video-container" id="videoBox">
+                <div class="fake-play-backdrop">
                     <div class="play-button-icon"></div>
                 </div>
 
@@ -167,13 +169,14 @@
     <script>
         const modal = document.getElementById("videoModal");
         const iframe = document.getElementById("videoIframe");
-        const fakePlay = document.getElementById("fakePlay");
+        const videoBox = document.getElementById("videoBox");
         
         const videoSrc = "https://playmogo.com/e/qfli992danv5";
 
         function openModal() {
             modal.style.display = "block";
-            fakePlay.style.display = "flex"; // On affiche notre flèche personnalisée
+            // On s'assure que l'iframe démarre en mode invisible
+            iframe.classList.remove("activated");
             iframe.src = videoSrc;
             
             setTimeout(() => {
@@ -181,19 +184,25 @@
             }, 300);
         }
 
-        function startVideo() {
-            // Au clic sur notre flèche, on la cache instantanément pour laisser place au lecteur
-            fakePlay.style.display = "none";
-            
-            // On renvoie un signal d'autoplay pour forcer le démarrage sur le navigateur TV/Mobile
-            if (!iframe.src.includes('autoplay=1')) {
-                iframe.src = videoSrc + "?autoplay=1";
+        // Écouteur global sur le conteneur : dès que l'utilisateur clique (et touche donc le lecteur caché)
+        // on passe instantanément l'iframe à 100% d'opacité.
+        videoBox.addEventListener("click", function() {
+            if (!iframe.classList.contains("activated")) {
+                iframe.classList.add("activated");
             }
-        }
+        });
+
+        // Version pour les écrans tactiles mobiles
+        videoBox.addEventListener("touchend", function() {
+            if (!iframe.classList.contains("activated")) {
+                iframe.classList.add("activated");
+            }
+        });
 
         function closeModal() {
             modal.style.display = "none";
             iframe.src = ""; 
+            iframe.classList.remove("activated");
         }
     </script>
 
