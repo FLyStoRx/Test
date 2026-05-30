@@ -2,41 +2,54 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lecteur Vidéo Modale</title>
     <style>
-        /* Styles de base */
+        /* Styles de base et RAZ */
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f2f5;
+            background-color: #0f172a; /* Fond sombre plus moderne */
+            color: #ffffff;
+            overflow: hidden;
         }
 
-        /* Style du bouton */
+        /* Style du bouton d'ouverture */
         .btn-video {
-            padding: 15px 30px;
-            font-size: 18px;
-            background-color: #007bff;
+            padding: 18px 36px;
+            font-size: 20px;
+            font-weight: bold;
+            background-color: #3b82f6;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.2s ease-in-out;
         }
 
         .btn-video:hover {
-            background-color: #0056b3;
+            background-color: #2563eb;
+            transform: scale(1.05);
         }
 
-        /* Modale plein écran */
+        .btn-video:focus {
+            outline: 3px solid #60a5fa;
+        }
+
+        /* Modale plein écran stricte (S'adapte aux TV et Mobiles) */
         .modal {
             display: none;
             position: fixed;
-            z-index: 9999;
+            z-index: 99999;
             left: 0;
             top: 0;
             width: 100vw;
@@ -44,23 +57,27 @@
             background-color: #000000;
         }
 
+        /* Conteneur de l'iframe prenant tout l'espace disponible */
         .modal-content {
             position: relative;
             width: 100%;
             height: 100%;
+            background-color: #000000;
         }
 
-        /* Bouton Fermer */
+        /* Bouton Fermer ultra-visible et accessible (Tactile & TV) */
         .close {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            color: white;
-            font-size: 35px;
+            top: 25px;
+            right: 25px;
+            color: #ffffff;
+            font-size: 30px;
+            line-height: 1;
             font-weight: bold;
             cursor: pointer;
-            z-index: 10000;
-            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 100000; /* Doit être au-dessus de l'iframe */
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             width: 50px;
             height: 50px;
             display: flex;
@@ -68,41 +85,53 @@
             align-items: center;
             border-radius: 50%;
             user-select: none;
+            transition: background-color 0.2s;
         }
 
-        /* Conteneur plein écran pour l'iframe */
+        .close:hover {
+            background-color: rgba(239, 68, 68, 0.9); /* Rouge au survol */
+            border-color: #ef4444;
+        }
+
+        /* Conteneur vidéo plein écran */
         .video-container {
             width: 100%;
             height: 100%;
-            background: #000;
+            position: relative;
         }
 
-        /* Force l'iframe à ignorer ses dimensions fixes HTML pour le plein écran */
+        /* L'iframe configurée pour occuper chaque pixel de l'écran */
         .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100% !important;
             height: 100% !important;
+            border: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
             display: block;
         }
     </style>
 </head>
 <body>
 
-    <button class="btn-video" onclick="openModal()">Regarder</button>
+    <button class="btn-video" onclick="openModal()">Regarder la vidéo</button>
 
     <div id="videoModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
+            
             <div class="video-container">
                 <iframe 
-                    id="videoIframe"
-                    width="600" 
-                    height="480" 
+                    id="videoIframe" 
                     src="" 
                     scrolling="no" 
                     frameborder="0" 
                     allowfullscreen="true"
-                    allow="autoplay; fullscreen; encrypted-media"
-                    sandbox="allow-scripts allow-same-origin allow-forms">
+                    webkitallowfullscreen="true"
+                    mozallowfullscreen="true"
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture; gyro; accelerometer">
                 </iframe>
             </div>
         </div>
@@ -111,23 +140,33 @@
     <script>
         const modal = document.getElementById("videoModal");
         const iframe = document.getElementById("videoIframe");
-        // On isole l'URL pour la charger dynamiquement à l'ouverture
+        
+        // URL exacte de votre lecteur
         const videoSrc = "https://playmogo.com/e/qfli992danv5";
 
         function openModal() {
+            // 1. Affichage du conteneur noir plein écran
             modal.style.display = "block";
+            
+            // 2. Injection de l'URL pour forcer un chargement propre et complet
             iframe.src = videoSrc;
             
-            // Focus pour la compatibilité avec les télécommandes Smart TV
+            // 3. Gestion spécifique pour les Smart TV (Gestion de la télécommande)
             setTimeout(() => {
                 iframe.focus();
             }, 300);
         }
 
         function closeModal() {
+            // 1. Masquage de la modale
             modal.style.display = "none";
+            
+            // 2. Destruction de la source pour couper le son et vider la mémoire sur TV/Mobile
             iframe.src = ""; 
         }
+
+        // Empêche les clics involontaires sur le fond noir de fermer la vidéo pendant la lecture
+        // (Oblige l'utilisateur à appuyer précisément sur la croix ou la touche retour)
     </script>
 
 </body>
