@@ -5,47 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lecteur Vidéo Modale</title>
     <style>
-        /* Styles de base et RAZ */
         * {
             box-sizing: border-box;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #0f172a; /* Fond sombre plus moderne */
-            color: #ffffff;
+            background-color: #0f172a;
             overflow: hidden;
         }
 
-        /* Style du bouton d'ouverture */
+        /* Bouton d'ouverture */
         .btn-video {
             padding: 18px 36px;
             font-size: 20px;
             font-weight: bold;
-            background-color: #3b82f6;
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: all 0.2s ease-in-out;
+            transition: background-color 0.3s;
         }
 
         .btn-video:hover {
-            background-color: #2563eb;
-            transform: scale(1.05);
+            background-color: #0056b3;
         }
 
-        .btn-video:focus {
-            outline: 3px solid #60a5fa;
-        }
-
-        /* Modale plein écran stricte (S'adapte aux TV et Mobiles) */
+        /* Modale Plein Écran */
         .modal {
             display: none;
             position: fixed;
@@ -57,25 +49,22 @@
             background-color: #000000;
         }
 
-        /* Conteneur de l'iframe prenant tout l'espace disponible */
         .modal-content {
             position: relative;
             width: 100%;
             height: 100%;
-            background-color: #000000;
         }
 
-        /* Bouton Fermer ultra-visible et accessible (Tactile & TV) */
+        /* Bouton Fermer */
         .close {
             position: absolute;
             top: 25px;
             right: 25px;
             color: #ffffff;
             font-size: 30px;
-            line-height: 1;
             font-weight: bold;
             cursor: pointer;
-            z-index: 100000; /* Doit être au-dessus de l'iframe */
+            z-index: 100001;
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid rgba(255, 255, 255, 0.3);
             width: 50px;
@@ -85,22 +74,16 @@
             align-items: center;
             border-radius: 50%;
             user-select: none;
-            transition: background-color 0.2s;
         }
 
-        .close:hover {
-            background-color: rgba(239, 68, 68, 0.9); /* Rouge au survol */
-            border-color: #ef4444;
-        }
-
-        /* Conteneur vidéo plein écran */
+        /* Conteneur Vidéo */
         .video-container {
             width: 100%;
             height: 100%;
             position: relative;
+            background: #000;
         }
 
-        /* L'iframe configurée pour occuper chaque pixel de l'écran */
         .video-container iframe {
             position: absolute;
             top: 0;
@@ -108,9 +91,51 @@
             width: 100% !important;
             height: 100% !important;
             border: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
             display: block;
+        }
+
+        /* LA GRANDE FLÈCHE FORCÉE (Invisible au début, apparaît sur TV/Mobile si besoin) */
+        .fake-play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100000; /* Placé juste au-dessus de l'iframe pour capter le clic */
+            cursor: pointer;
+        }
+
+        /* Triangle de la flèche de lecture */
+        .play-button-icon {
+            width: 90px;
+            height: 90px;
+            background-color: rgba(0, 123, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 30px rgba(0, 123, 255, 0.5);
+            transition: transform 0.2s;
+        }
+
+        .play-button-icon::after {
+            content: "";
+            display: block;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 20px 0 20px 35px;
+            border-color: transparent transparent transparent #ffffff;
+            margin-left: 8px; /* Centre visuellement le triangle */
+        }
+
+        .fake-play-overlay:hover .play-button-icon {
+            transform: scale(1.1);
+            background-color: #007bff;
         }
     </style>
 </head>
@@ -123,15 +148,17 @@
             <span class="close" onclick="closeModal()">&times;</span>
             
             <div class="video-container">
+                <div id="fakePlay" class="fake-play-overlay" onclick="startVideo()">
+                    <div class="play-button-icon"></div>
+                </div>
+
                 <iframe 
                     id="videoIframe" 
                     src="" 
                     scrolling="no" 
                     frameborder="0" 
                     allowfullscreen="true"
-                    webkitallowfullscreen="true"
-                    mozallowfullscreen="true"
-                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture; gyro; accelerometer">
+                    allow="autoplay; fullscreen; encrypted-media">
                 </iframe>
             </div>
         </div>
@@ -140,33 +167,34 @@
     <script>
         const modal = document.getElementById("videoModal");
         const iframe = document.getElementById("videoIframe");
+        const fakePlay = document.getElementById("fakePlay");
         
-        // URL exacte de votre lecteur
         const videoSrc = "https://playmogo.com/e/qfli992danv5";
 
         function openModal() {
-            // 1. Affichage du conteneur noir plein écran
             modal.style.display = "block";
-            
-            // 2. Injection de l'URL pour forcer un chargement propre et complet
+            fakePlay.style.display = "flex"; // On affiche notre flèche personnalisée
             iframe.src = videoSrc;
             
-            // 3. Gestion spécifique pour les Smart TV (Gestion de la télécommande)
             setTimeout(() => {
                 iframe.focus();
             }, 300);
         }
 
-        function closeModal() {
-            // 1. Masquage de la modale
-            modal.style.display = "none";
+        function startVideo() {
+            // Au clic sur notre flèche, on la cache instantanément pour laisser place au lecteur
+            fakePlay.style.display = "none";
             
-            // 2. Destruction de la source pour couper le son et vider la mémoire sur TV/Mobile
-            iframe.src = ""; 
+            // On renvoie un signal d'autoplay pour forcer le démarrage sur le navigateur TV/Mobile
+            if (!iframe.src.includes('autoplay=1')) {
+                iframe.src = videoSrc + "?autoplay=1";
+            }
         }
 
-        // Empêche les clics involontaires sur le fond noir de fermer la vidéo pendant la lecture
-        // (Oblige l'utilisateur à appuyer précisément sur la croix ou la touche retour)
+        function closeModal() {
+            modal.style.display = "none";
+            iframe.src = ""; 
+        }
     </script>
 
 </body>
