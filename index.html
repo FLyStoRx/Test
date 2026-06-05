@@ -3,47 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lecteur Vidéo Professionnel</title>
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <title>Page de Test Vidéo</title>
     <style>
-        body { 
-            margin: 0; 
-            padding: 20px; 
-            background-color: #111; /* Fond sombre pour un aspect cinéma */
-            display: flex; 
-            justify-content: center; 
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: sans-serif;
         }
-        
-        /* Conteneur qui force le format 16:9 */
-        .video-wrapper {
-            width: 100%;
-            max-width: 900px; /* Taille maximale sur grand écran */
-        }
-
-        .video-js {
-            width: 100% !important;
-            height: auto !important;
-            aspect-ratio: 16 / 9; /* GARANTIT LE FORMAT 16:9 PARTOUT */
-            border-radius: 8px; /* Bords arrondis pour le style */
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        .container {
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <div class="video-wrapper">
-        <video-js id="ma-video" class="vjs-default-skin vjs-big-play-centered" controls preload="auto">
-            <source src="https://uio1105mk.cloudatacdn.com/u5kj6ig4yta3sdgge4j2y32pdjv7lvb6tcr254aioupxtxyaosxwdeowdtbq/25wnfotn6i~5XAdBnU1cK?token=gged3cokp51n00jn9ktqc01l&expiry=1780517086793" type="video/mp4">
-        </video-js>
+    <div class="container">
+        <h1>Lecteur de Test</h1>
+        <iframe 
+            src="https://vidtube.one/embed-oah9ur6dmd2y.html" 
+            frameborder="0" 
+            marginwidth="0" 
+            marginheight="0" 
+            scrolling="no" 
+            width="640" 
+            height="360" 
+            allowfullscreen>
+        </iframe>
     </div>
 
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-    <script>
-        var player = videojs('ma-video', {
-            fluid: true, // Force le lecteur à être fluide
-            responsive: true
-        });
-    </script>
 </body>
 </html>
